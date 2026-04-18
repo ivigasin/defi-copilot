@@ -45,13 +45,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
       const addr = accounts[0];
       if (!addr) throw new Error('No account returned from MetaMask');
-      await registerWallet(addr).catch((err) => {
-        const msg = err instanceof Error ? err.message : String(err);
+      await registerWallet(addr).catch((err: unknown) => {
+        const e = err as { message?: string };
+        const msg = typeof e?.message === 'string' ? e.message : String(err);
         if (!msg.includes('already registered')) throw err;
       });
       setAddress(addr);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+    } catch (err: unknown) {
+      const e = err as { message?: string; code?: number };
+      const msg = typeof e?.message === 'string' ? e.message : JSON.stringify(err);
       setError(msg);
     } finally {
       setIsLoading(false);

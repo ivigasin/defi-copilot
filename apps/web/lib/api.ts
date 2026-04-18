@@ -7,7 +7,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message?.message ?? body.message ?? `API error ${res.status}`);
+    const msg = body.message?.message ?? body.message;
+    const text = Array.isArray(msg) ? msg.map((m: { message?: string }) => m.message ?? String(m)).join(', ') : typeof msg === 'object' ? JSON.stringify(msg) : msg;
+    throw new Error(text ?? `API error ${res.status}`);
   }
   return res.json();
 }
