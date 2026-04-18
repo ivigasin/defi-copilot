@@ -26,18 +26,53 @@ COPY --from=deps /app/packages/provider-sdk/node_modules ./packages/provider-sdk
 COPY --from=deps /app/packages/recommendation-engine/node_modules ./packages/recommendation-engine/node_modules
 COPY --from=deps /app/packages/alert-engine/node_modules ./packages/alert-engine/node_modules
 
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json tsconfig.json nx.json ./
-COPY apps/api/ apps/api/
+COPY tsconfig.base.json tsconfig.json nx.json pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/domain/ packages/domain/
 COPY packages/shared/ packages/shared/
 COPY packages/provider-sdk/ packages/provider-sdk/
 COPY packages/recommendation-engine/ packages/recommendation-engine/
 COPY packages/alert-engine/ packages/alert-engine/
+COPY apps/api/ apps/api/
+
+# Build workspace packages (CommonJS for Node.js runtime)
+RUN node -e " \
+  const pkgs = ['domain','shared','provider-sdk','recommendation-engine','alert-engine']; \
+  const fs = require('fs'); \
+  pkgs.forEach(p => { \
+    const path = \`packages/\${p}/tsconfig.json\`; \
+    const cfg = JSON.parse(fs.readFileSync(path)); \
+    cfg.compilerOptions = cfg.compilerOptions || {}; \
+    cfg.compilerOptions.module = 'commonjs'; \
+    cfg.compilerOptions.moduleResolution = 'node'; \
+    cfg.compilerOptions.outDir = './dist'; \
+    cfg.compilerOptions.skipLibCheck = true; \
+    cfg.compilerOptions.declaration = false; \
+    fs.writeFileSync(path, JSON.stringify(cfg, null, 2)); \
+  }); \
+"
+RUN cd packages/domain && npx tsc -p tsconfig.json
+RUN cd packages/shared && npx tsc -p tsconfig.json
+RUN cd packages/provider-sdk && npx tsc -p tsconfig.json
+RUN cd packages/recommendation-engine && npx tsc -p tsconfig.json
+RUN cd packages/alert-engine && npx tsc -p tsconfig.json
+
+# Point each package's main to the compiled dist
+RUN node -e " \
+  const pkgs = ['domain','shared','provider-sdk','recommendation-engine','alert-engine']; \
+  const fs = require('fs'); \
+  pkgs.forEach(p => { \
+    const path = \`packages/\${p}/package.json\`; \
+    const pkg = JSON.parse(fs.readFileSync(path)); \
+    pkg.main = './dist/index.js'; \
+    pkg.types = './dist/index.d.ts'; \
+    fs.writeFileSync(path, JSON.stringify(pkg, null, 2)); \
+  }); \
+"
 
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
 
-# Build API (webpack bundles workspace packages)
+# Build API with tsc
 RUN cd apps/api && npx nest build
 
 # ── Stage 3: Production ──────────────────────────────────────────
@@ -45,13 +80,28 @@ FROM node:20-alpine AS production
 RUN apk add --no-cache tini
 WORKDIR /app
 
-# Copy Prisma schema + generated client
-COPY --from=build /app/apps/api/prisma ./prisma
-COPY --from=build /app/apps/api/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/apps/api/node_modules/@prisma ./node_modules/@prisma
+# Runtime node_modules
+COPY --from=build /app/apps/api/node_modules ./node_modules
 
-# Copy webpack bundle (single file)
+# Compiled API
 COPY --from=build /app/apps/api/dist ./dist
+
+# Compiled workspace packages (placed where pnpm symlinks point)
+COPY --from=build /app/packages/domain/dist ./packages/domain/dist
+COPY --from=build /app/packages/domain/package.json ./packages/domain/package.json
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+COPY --from=build /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=build /app/packages/provider-sdk/dist ./packages/provider-sdk/dist
+COPY --from=build /app/packages/provider-sdk/package.json ./packages/provider-sdk/package.json
+COPY --from=build /app/packages/recommendation-engine/dist ./packages/recommendation-engine/dist
+COPY --from=build /app/packages/recommendation-engine/package.json ./packages/recommendation-engine/package.json
+COPY --from=build /app/packages/alert-engine/dist ./packages/alert-engine/dist
+COPY --from=build /app/packages/alert-engine/package.json ./packages/alert-engine/package.json
+
+# Prisma schema + generated client
+COPY --from=build /app/apps/api/prisma ./prisma
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 
 ENV NODE_ENV=production
 EXPOSE 4000

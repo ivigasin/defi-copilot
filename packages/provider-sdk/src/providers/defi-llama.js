@@ -37,7 +37,7 @@ async function fetchTokenPrices(tokenAddresses) {
     if (!res.ok) {
         throw new Error(`DeFi Llama prices API error: ${res.status}`);
     }
-    const body = await res.json();
+    const body = (await res.json());
     const prices = new Map();
     for (const [key, val] of Object.entries(body.coins)) {
         // key format: "ethereum:0x..."
@@ -61,7 +61,7 @@ async function fetchEthPrice() {
     if (!res.ok) {
         throw new Error(`DeFi Llama ETH price API error: ${res.status}`);
     }
-    const body = await res.json();
+    const body = (await res.json());
     const price = body.coins['coingecko:ethereum']?.price;
     if (price === undefined) {
         throw new Error('ETH price not found in DeFi Llama response');
@@ -82,7 +82,7 @@ async function fetchPoolApys(project, chain = 'Ethereum') {
     if (!res.ok) {
         throw new Error(`DeFi Llama yields API error: ${res.status}`);
     }
-    const body = await res.json();
+    const body = (await res.json());
     const apys = new Map();
     for (const pool of body.data) {
         if (pool.project.toLowerCase() === project.toLowerCase() && pool.chain === chain) {

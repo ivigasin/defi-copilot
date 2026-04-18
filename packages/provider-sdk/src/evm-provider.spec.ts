@@ -117,6 +117,7 @@ describe('EvmProvider', () => {
 describe('createProvider with evm type', () => {
   it('throws when EVM_RPC_URL is not set', () => {
     delete process.env.EVM_RPC_URL;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createProvider } = require('./provider-factory');
     expect(() => createProvider('evm')).toThrow('EVM_RPC_URL environment variable is required');
   });

@@ -54,7 +54,7 @@ export async function fetchTokenPrices(tokenAddresses: string[]): Promise<Map<st
     throw new Error(`DeFi Llama prices API error: ${res.status}`);
   }
 
-  const body: PriceResult = await res.json();
+  const body = (await res.json()) as PriceResult;
   const prices = new Map<string, number>();
 
   for (const [key, val] of Object.entries(body.coins)) {
@@ -82,7 +82,7 @@ export async function fetchEthPrice(): Promise<number> {
     throw new Error(`DeFi Llama ETH price API error: ${res.status}`);
   }
 
-  const body: PriceResult = await res.json();
+  const body = (await res.json()) as PriceResult;
   const price = body.coins['coingecko:ethereum']?.price;
   if (price === undefined) {
     throw new Error('ETH price not found in DeFi Llama response');
@@ -109,7 +109,7 @@ export async function fetchPoolApys(
     throw new Error(`DeFi Llama yields API error: ${res.status}`);
   }
 
-  const body: YieldsResult = await res.json();
+  const body = (await res.json()) as YieldsResult;
   const apys = new Map<string, number>();
 
   for (const pool of body.data) {

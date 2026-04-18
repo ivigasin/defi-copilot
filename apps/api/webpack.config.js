@@ -9,6 +9,20 @@ module.exports = function (options) {
         allowlist: [/^@defi-copilot\//],
       }),
     ],
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
+            },
+          },
+          exclude: /node_modules/,
+        },
+      ],
+    },
     resolve: {
       ...options.resolve,
       alias: {

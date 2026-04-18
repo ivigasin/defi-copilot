@@ -74,7 +74,7 @@ export async function fetchAavePositions(
     .filter((r) => r.scaledATokenBalance > 0n || r.scaledVariableDebt > 0n)
     .map((r) => (r.underlyingAsset as string).toLowerCase());
 
-  const [prices, apys] = await Promise.all([
+  const [, apys] = await Promise.all([
     fetchTokenPrices(reserveAddresses),
     fetchPoolApys('aave-v3'),
   ]);

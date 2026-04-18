@@ -1,4 +1,4 @@
-import { Recommendation, RecommendationType, PositionType } from '@defi-copilot/domain';
+import { Recommendation, RecommendationType } from '@defi-copilot/domain';
 import { randomUUID } from 'crypto';
 import { PortfolioData } from '../types';
 
