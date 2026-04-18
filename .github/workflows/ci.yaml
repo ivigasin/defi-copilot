@@ -72,7 +72,7 @@ jobs:
         run: pnpm test
 
   build-images:
-    name: Build Images
+    name: Build Images (${{ matrix.app }})
     runs-on: ubuntu-latest
 
     strategy:
@@ -82,7 +82,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect relevant changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            changed:
+              - 'apps/${{ matrix.app }}/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - '.npmrc'
+              - 'pnpm-workspace.yaml'
+
       - name: Build image
+        if: steps.filter.outputs.changed == 'true'
         run: |
           BUILD_ARGS=""
           if [ "${{ matrix.app }}" = "web" ]; then

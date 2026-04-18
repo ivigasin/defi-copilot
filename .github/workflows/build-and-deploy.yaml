@@ -15,7 +15,7 @@ env:
 
 jobs:
   build-and-push:
-    name: Build & Push Images
+    name: Build & Push (${{ matrix.app }})
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -28,15 +28,32 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Detect relevant changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.workflow_run.head_sha }}~1
+          ref: ${{ github.event.workflow_run.head_sha }}
+          filters: |
+            changed:
+              - 'apps/${{ matrix.app }}/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - '.npmrc'
+              - 'pnpm-workspace.yaml'
+
       - name: Install doctl
+        if: steps.filter.outputs.changed == 'true'
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DOCR
+        if: steps.filter.outputs.changed == 'true'
         run: doctl registry login --expiry-seconds 600
 
       - name: Build image
+        if: steps.filter.outputs.changed == 'true'
         run: |
           BUILD_ARGS=""
           if [ "${{ matrix.app }}" = "web" ]; then
@@ -50,6 +67,7 @@ jobs:
             .
 
       - name: Push image
+        if: steps.filter.outputs.changed == 'true'
         run: |
           docker push ${{ env.REGISTRY }}/${{ matrix.app }}:${{ github.event.workflow_run.head_sha }}
           docker push ${{ env.REGISTRY }}/${{ matrix.app }}:latest
