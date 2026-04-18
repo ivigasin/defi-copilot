@@ -71,6 +71,29 @@ jobs:
       - name: Test
         run: pnpm test
 
+  build-images:
+    name: Build Images
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        app: [api, web, worker]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          BUILD_ARGS=""
+          if [ "${{ matrix.app }}" = "web" ]; then
+            BUILD_ARGS="--build-arg NEXT_PUBLIC_API_URL=https://api.defi.vigasin.com"
+          fi
+          docker build \
+            -f apps/${{ matrix.app }}/Dockerfile \
+            $BUILD_ARGS \
+            -t defi-copilot/${{ matrix.app }}:${{ github.sha }} \
+            .
+
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
