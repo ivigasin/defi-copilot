@@ -24,6 +24,14 @@ COPY packages/shared/ packages/shared/
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* vars are inlined at build time — must be provided as build args.
+# Example: docker build --build-arg NEXT_PUBLIC_API_URL=https://api.defi.vigasin.com
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+ARG NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+ENV NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+
 RUN cd apps/web && npx next build
 
 # ── Stage 3: Production ──────────────────────────────────────────
