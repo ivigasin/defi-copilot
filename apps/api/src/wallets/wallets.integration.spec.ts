@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 import { PrismaService } from '../prisma.service';
 import { AllExceptionsFilter } from '../common/filters/http-exception.filter';
+import { MockPortfolioProvider } from '@defi-copilot/provider-sdk';
 
 // Mock PrismaService to avoid real DB dependency
 const mockPrisma = {
@@ -46,6 +47,8 @@ describe('Wallets API (integration)', () => {
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrisma)
+      .overrideProvider('PORTFOLIO_PROVIDER')
+      .useValue(new MockPortfolioProvider())
       .compile();
 
     app = moduleRef.createNestApplication();

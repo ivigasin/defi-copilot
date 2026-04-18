@@ -11,7 +11,10 @@ import { createProvider } from '@defi-copilot/provider-sdk';
     WalletsRepository,
     {
       provide: 'PORTFOLIO_PROVIDER',
-      useFactory: () => createProvider('mock'),
+      useFactory: () => {
+        const providerType = process.env.PROVIDER_TYPE ?? 'mock';
+        return createProvider(providerType as 'mock' | 'evm');
+      },
     },
   ],
 })
