@@ -158,10 +158,11 @@ export async function injectMockEthereum(page: Page) {
   }, WALLET_ADDRESS);
 }
 
-/** Injects mock ethereum, navigates to the given path, clicks MetaMask, and waits for connection */
+/** Injects mock ethereum, navigates to the given path, opens wallet modal, picks MetaMask, and waits for connection */
 export async function connectWallet(page: Page, path = '/dashboard') {
   await injectMockEthereum(page);
   await page.goto(path);
+  await page.getByRole('button', { name: /Connect wallet/i }).click();
   await page.getByRole('button', { name: /MetaMask/i }).click();
   await page.getByText(WALLET_ADDRESS.slice(0, 6)).waitFor();
 }
