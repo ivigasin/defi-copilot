@@ -93,7 +93,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 
   const connectMetaMask = useCallback(() => {
-    const metamask = connectors.find((c) => c.id === 'metaMask' || c.name === 'MetaMask');
+    const metamask = connectors.find((c) => c.id === 'injected' || c.id === 'metaMask' || c.name === 'MetaMask');
     if (metamask) {
       connect({ connector: metamask });
     } else {

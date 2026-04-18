@@ -5,7 +5,7 @@ import { useWallet } from '@/lib/wallet-context';
 import type { Connector } from 'wagmi';
 
 const WALLET_META: Record<string, { label: string; icon: () => React.ReactNode }> = {
-  metaMask: {
+  injected: {
     label: 'MetaMask',
     icon: () => (
       <svg width="28" height="28" viewBox="0 0 318.6 318.6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,7 +50,7 @@ const WALLET_META: Record<string, { label: string; icon: () => React.ReactNode }
   },
 };
 
-const CONNECTOR_ORDER = ['metaMask', 'okxWallet', 'walletConnect', 'coinbaseWalletSDK'];
+const CONNECTOR_ORDER = ['injected', 'okxWallet', 'walletConnect', 'coinbaseWalletSDK'];
 
 function WalletModal({ onClose }: { onClose: () => void }) {
   const { address, connectors, connect, isLoading, error } = useWallet();

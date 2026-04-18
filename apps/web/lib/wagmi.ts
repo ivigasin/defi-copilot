@@ -8,7 +8,7 @@ const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID 
 export const wagmiConfig = createConfig({
   chains: [mainnet],
   connectors: [
-    injected({ target: 'metaMask' }),
+    injected(),
     injected({
       target: {
         id: 'okxWallet',
