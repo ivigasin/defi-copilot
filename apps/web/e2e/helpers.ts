@@ -137,12 +137,18 @@ export async function mockApiRoutes(page: Page) {
 }
 
 export async function connectWallet(page: Page) {
-  // Click "Enter address manually"
-  await page.getByText('Enter address manually').click();
-  // Fill address
-  await page.getByPlaceholder('Enter EVM wallet address').fill(WALLET_ADDRESS);
-  // Click Connect
-  await page.getByRole('button', { name: 'Connect' }).click();
-  // Wait for wallet to be connected (address truncation visible)
-  await page.getByText(`${WALLET_ADDRESS.slice(0, 6)}...${WALLET_ADDRESS.slice(-4)}`).waitFor();
+  // Inject mock window.ethereum into the live page so connectMetaMask() resolves to the test address
+  await page.evaluate((address) => {
+    (window as unknown as Record<string, unknown>).ethereum = {
+      isMetaMask: true,
+      request: async ({ method }: { method: string }) => {
+        if (method === 'eth_requestAccounts') return [address];
+        return null;
+      },
+    };
+  }, WALLET_ADDRESS);
+
+  await page.getByRole('button', { name: /Connect MetaMask/i }).click();
+  // Wait for connected state — address truncated with ellipsis character
+  await page.getByText(WALLET_ADDRESS.slice(0, 6)).waitFor();
 }

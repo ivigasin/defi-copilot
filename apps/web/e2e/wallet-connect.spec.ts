@@ -1,51 +1,32 @@
 import { test, expect } from '@playwright/test';
-import { mockApiRoutes, mockData } from './helpers';
+import { mockApiRoutes, mockData, connectWallet } from './helpers';
 
 const WALLET = mockData.walletAddress;
 
 test.describe('Wallet Connection Flow', () => {
-  test('shows connector buttons and manual entry toggle', async ({ page }) => {
+  test('shows Connect MetaMask button', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page.getByText('Enter address manually')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Connect MetaMask/i })).toBeVisible();
   });
 
-  test('connects with manual address entry', async ({ page }) => {
+  test('connects via mock MetaMask and shows connected state', async ({ page }) => {
     await mockApiRoutes(page);
     await page.goto('/dashboard');
+    await connectWallet(page);
 
-    // Open manual entry
-    await page.getByText('Enter address manually').click();
-    await expect(page.getByPlaceholder('Enter EVM wallet address')).toBeVisible();
-
-    // Enter address and connect
-    await page.getByPlaceholder('Enter EVM wallet address').fill(WALLET);
-    await page.getByRole('button', { name: 'Connect' }).click();
-
-    // Verify connected state
-    await expect(page.getByText('Connected:')).toBeVisible();
-    await expect(page.getByText(`${WALLET.slice(0, 6)}...${WALLET.slice(-4)}`)).toBeVisible();
+    await expect(page.getByText('Connected')).toBeVisible();
+    await expect(page.getByText(WALLET.slice(0, 6))).toBeVisible();
   });
 
   test('disconnect resets wallet state', async ({ page }) => {
     await mockApiRoutes(page);
     await page.goto('/dashboard');
+    await connectWallet(page);
 
-    // Connect
-    await page.getByText('Enter address manually').click();
-    await page.getByPlaceholder('Enter EVM wallet address').fill(WALLET);
-    await page.getByRole('button', { name: 'Connect' }).click();
-    await expect(page.getByText('Connected:')).toBeVisible();
+    await expect(page.getByText('Connected')).toBeVisible();
 
-    // Disconnect
     await page.getByRole('button', { name: 'Disconnect' }).click();
 
-    // Verify disconnected state
     await expect(page.getByText('Connect a wallet to view your portfolio.')).toBeVisible();
-  });
-
-  test('connect button disabled when input is empty', async ({ page }) => {
-    await page.goto('/dashboard');
-    await page.getByText('Enter address manually').click();
-    await expect(page.getByRole('button', { name: 'Connect' })).toBeDisabled();
   });
 });
