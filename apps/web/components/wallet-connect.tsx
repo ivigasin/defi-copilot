@@ -186,6 +186,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
 export function WalletConnect() {
   const { address, disconnect } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
+  const handleClose = useCallback(() => setIsOpen(false), []);
 
   if (address) {
     return (
@@ -219,7 +220,7 @@ export function WalletConnect() {
         Connect wallet
       </button>
 
-      {isOpen && <WalletModal onClose={() => setIsOpen(false)} />}
+      {isOpen && <WalletModal onClose={handleClose} />}
     </>
   );
 }
