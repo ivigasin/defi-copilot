@@ -12,6 +12,6 @@ terraform {
 
 inputs = {
   name              = "${local.common.locals.project}-registry"
-  subscription_tier = "starter"
+  subscription_tier = "basic"
   region            = local.common.locals.region
 }

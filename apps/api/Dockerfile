@@ -46,7 +46,10 @@ RUN node -e " \
     cfg.compilerOptions.moduleResolution = 'node'; \
     cfg.compilerOptions.outDir = './dist'; \
     cfg.compilerOptions.skipLibCheck = true; \
-    cfg.compilerOptions.declaration = false; \
+    cfg.compilerOptions.composite = false; \
+    cfg.compilerOptions.declarationMap = false; \
+    if (p === 'provider-sdk') cfg.compilerOptions.lib = ['ES2022', 'DOM', 'DOM.Iterable']; \
+    cfg.exclude = ['**/*.spec.ts', 'node_modules', 'dist']; \
     fs.writeFileSync(path, JSON.stringify(cfg, null, 2)); \
   }); \
 "
@@ -72,6 +75,15 @@ RUN node -e " \
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
 
+# Patch API tsconfig to include DOM lib (needed because viem→ox ships TS source with browser types)
+RUN node -e " \
+  const fs = require('fs'); \
+  const cfg = JSON.parse(fs.readFileSync('apps/api/tsconfig.json')); \
+  cfg.compilerOptions.lib = ['ES2022', 'DOM', 'DOM.Iterable']; \
+  cfg.compilerOptions.skipLibCheck = true; \
+  fs.writeFileSync('apps/api/tsconfig.json', JSON.stringify(cfg, null, 2)); \
+"
+
 # Build API with tsc
 RUN cd apps/api && npx nest build
 
@@ -80,13 +92,16 @@ FROM node:20-alpine AS production
 RUN apk add --no-cache tini
 WORKDIR /app
 
-# Runtime node_modules
-COPY --from=build /app/apps/api/node_modules ./node_modules
+# Full pnpm node_modules (includes .pnpm virtual store with Prisma client)
+COPY --from=build /app/node_modules ./node_modules
 
 # Compiled API
 COPY --from=build /app/apps/api/dist ./dist
 
-# Compiled workspace packages (placed where pnpm symlinks point)
+# Prisma schema
+COPY --from=build /app/apps/api/prisma ./prisma
+
+# Compiled workspace packages (pnpm symlinks in node_modules point here)
 COPY --from=build /app/packages/domain/dist ./packages/domain/dist
 COPY --from=build /app/packages/domain/package.json ./packages/domain/package.json
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
@@ -97,11 +112,6 @@ COPY --from=build /app/packages/recommendation-engine/dist ./packages/recommenda
 COPY --from=build /app/packages/recommendation-engine/package.json ./packages/recommendation-engine/package.json
 COPY --from=build /app/packages/alert-engine/dist ./packages/alert-engine/dist
 COPY --from=build /app/packages/alert-engine/package.json ./packages/alert-engine/package.json
-
-# Prisma schema + generated client
-COPY --from=build /app/apps/api/prisma ./prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 
 ENV NODE_ENV=production
 EXPOSE 4000

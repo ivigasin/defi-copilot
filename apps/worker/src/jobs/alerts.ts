@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { AssetBalance, ProtocolPosition } from '@defi-copilot/domain';
+import { AlertType, AssetBalance, ProtocolPosition } from '@defi-copilot/domain';
 import { evaluateAlerts, AlertContext } from '@defi-copilot/alert-engine';
 
 interface SnapshotRow {
@@ -45,7 +45,7 @@ export async function processAlerts(
     rules: rules.map((r) => ({
       id: r.id,
       walletAddress: r.walletAddress,
-      type: r.type,
+      type: r.type as AlertType,
       threshold: r.threshold,
       enabled: r.enabled,
     })),
