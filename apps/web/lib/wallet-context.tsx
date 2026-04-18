@@ -62,7 +62,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           const addr: string | undefined = typeof raw === 'string' ? raw : raw?.address;
           if (addr) {
             const ok = await tryRegister(addr, registeredRef);
-            if (!ok) wagmiDisconnect();
+            if (!ok) {
+              wagmiDisconnect();
+              return;
+            }
           }
           options?.onSuccess?.(data, ...rest);
         },
