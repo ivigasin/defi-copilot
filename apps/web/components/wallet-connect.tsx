@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWallet } from '@/lib/wallet-context';
 import type { Connector } from 'wagmi';
 
@@ -53,7 +53,10 @@ const WALLET_META: Record<string, { label: string; icon: () => React.ReactNode }
 const CONNECTOR_ORDER = ['metaMask', 'okxWallet', 'walletConnect', 'coinbaseWalletSDK'];
 
 function WalletModal({ onClose }: { onClose: () => void }) {
-  const { connectors, connect, isLoading, error } = useWallet();
+  const { address, connectors, connect, isLoading, error } = useWallet();
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dialogTitleId = 'wallet-connect-dialog-title';
+  const dialogDescriptionId = 'wallet-connect-dialog-description';
 
   const sorted = [...connectors].sort((a, b) => {
     const ai = CONNECTOR_ORDER.indexOf(a.id);
@@ -63,8 +66,15 @@ function WalletModal({ onClose }: { onClose: () => void }) {
 
   const handleConnect = (connector: Connector) => {
     connect({ connector });
-    onClose();
   };
+
+  useEffect(() => {
+    if (address) onClose();
+  }, [address, onClose]);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
 
   // Close on Escape
   const handleKeyDown = useCallback(
@@ -81,14 +91,21 @@ function WalletModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-sm mx-4 rounded-2xl bg-zinc-900 border border-zinc-700/50 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={dialogTitleId}
+        aria-describedby={dialogDescriptionId}
+        className="relative w-full max-w-sm mx-4 rounded-2xl bg-zinc-900 border border-zinc-700/50 shadow-2xl"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
-          <h2 className="text-lg font-semibold text-white">Connect Wallet</h2>
+          <h2 id={dialogTitleId} className="text-lg font-semibold text-white">Connect Wallet</h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-zinc-800"
             aria-label="Close"
@@ -104,7 +121,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
         <div className="mx-6 border-b border-zinc-800" />
 
         {/* Subtitle */}
-        <p className="px-6 pt-3 pb-2 text-sm text-zinc-400 text-center">
+        <p id={dialogDescriptionId} className="px-6 pt-3 pb-2 text-sm text-zinc-400 text-center">
           Select a wallet to connect
         </p>
 
