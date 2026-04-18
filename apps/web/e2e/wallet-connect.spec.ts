@@ -4,26 +4,36 @@ import { mockApiRoutes, mockData, connectWallet } from './helpers';
 const WALLET = mockData.walletAddress;
 
 test.describe('Wallet Connection Flow', () => {
-  test('shows Connect MetaMask button', async ({ page }) => {
+  test('shows Connect wallet button and opens modal with options', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page.getByRole('button', { name: /Connect MetaMask/i })).toBeVisible();
+    const connectBtn = page.getByRole('button', { name: /Connect wallet/i });
+    await expect(connectBtn).toBeVisible();
+
+    await connectBtn.click();
+    await expect(page.getByRole('dialog', { name: 'Connect Wallet' })).toBeVisible();
+    await expect(page.getByText('Select a wallet to connect')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeFocused();
+    await expect(page.getByRole('button', { name: /MetaMask/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /OKX Wallet/i })).toBeVisible();
+    if (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
+      await expect(page.getByRole('button', { name: /Ledger Live/i })).toBeVisible();
+    }
+    await expect(page.getByRole('button', { name: /Coinbase Wallet/i })).toBeVisible();
   });
 
   test('connects via mock MetaMask and shows connected state', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/dashboard');
     await connectWallet(page);
 
-    await expect(page.getByText('Connected')).toBeVisible();
     await expect(page.getByText(WALLET.slice(0, 6))).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Disconnect' })).toBeVisible();
   });
 
   test('disconnect resets wallet state', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/dashboard');
     await connectWallet(page);
 
-    await expect(page.getByText('Connected')).toBeVisible();
+    await expect(page.getByText(WALLET.slice(0, 6))).toBeVisible();
 
     await page.getByRole('button', { name: 'Disconnect' }).click();
 

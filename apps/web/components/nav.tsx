@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { WalletConnect } from './wallet-connect';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -34,6 +35,9 @@ export function Nav() {
           </Link>
         );
       })}
+      <div className="ml-auto">
+        <WalletConnect />
+      </div>
     </nav>
   );
 }

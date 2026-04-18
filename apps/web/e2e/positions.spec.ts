@@ -9,8 +9,7 @@ test.describe('Positions Page', () => {
 
   test('displays protocol positions after connection', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/positions');
-    await connectWallet(page);
+    await connectWallet(page, '/positions');
 
     // Aave lending position
     await expect(page.getByText('Aave').first()).toBeVisible();
@@ -28,16 +27,14 @@ test.describe('Positions Page', () => {
 
   test('shows rewards on positions that have them', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/positions');
-    await connectWallet(page);
+    await connectWallet(page, '/positions');
 
     await expect(page.getByText('Rewards: $65.00')).toBeVisible();
   });
 
   test('shows debt on borrowing positions', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/positions');
-    await connectWallet(page);
+    await connectWallet(page, '/positions');
 
     await expect(page.getByText('Debt: $2,000.00')).toBeVisible();
   });

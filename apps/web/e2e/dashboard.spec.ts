@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockApiRoutes, connectWallet, mockData } from './helpers';
+import { mockApiRoutes, connectWallet } from './helpers';
 
 test.describe('Dashboard Page', () => {
   test('shows connect prompt when no wallet', async ({ page }) => {
@@ -9,7 +9,6 @@ test.describe('Dashboard Page', () => {
 
   test('displays portfolio data after wallet connection', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/dashboard');
     await connectWallet(page);
 
     // Total portfolio value
@@ -25,7 +24,6 @@ test.describe('Dashboard Page', () => {
 
   test('shows individual asset USD values', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/dashboard');
     await connectWallet(page);
 
     await expect(page.getByText('$8,000.00')).toBeVisible();
