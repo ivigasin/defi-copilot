@@ -11,7 +11,8 @@ const REDIS_PORT = Number(process.env.REDIS_PORT ?? 6379);
 const SNAPSHOT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 const connection = new IORedis({ host: REDIS_HOST, port: REDIS_PORT, maxRetriesPerRequest: null });
-const provider = createProvider('mock');
+const providerType = (process.env.PROVIDER_TYPE ?? 'mock') as 'mock' | 'evm';
+const provider = createProvider(providerType);
 
 const snapshotQueue = new Queue('snapshot', { connection });
 
