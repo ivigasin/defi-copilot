@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useRef, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useRef, useCallback, useEffect, type ReactNode } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { registerWallet } from './api';
 
@@ -17,6 +17,24 @@ interface WalletState {
 
 const WalletContext = createContext<WalletState | null>(null);
 
+async function tryRegister(addr: string, registeredRef: React.RefObject<Set<string>>) {
+  if (registeredRef.current.has(addr)) return true;
+  try {
+    await registerWallet(addr);
+    registeredRef.current.add(addr);
+    return true;
+  } catch (err: unknown) {
+    const e = err as { message?: string };
+    const msg = typeof e?.message === 'string' ? e.message : String(err);
+    if (msg.includes('already registered')) {
+      registeredRef.current.add(addr);
+      return true;
+    }
+    console.error('Failed to register wallet:', msg);
+    return false;
+  }
+}
+
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { address: wagmiAddress, isConnecting } = useAccount();
   const { connectors, connect: wagmiConnect, error: connectError } = useConnect();
@@ -24,6 +42,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const registeredRef = useRef<Set<string>>(new Set());
 
   const address = wagmiAddress ?? null;
+
+  // Handle auto-reconnect: register wallet when wagmi restores a session
+  useEffect(() => {
+    if (!address) return;
+    if (registeredRef.current.has(address)) return;
+    tryRegister(address, registeredRef).then((ok) => {
+      if (!ok) wagmiDisconnect();
+    });
+  // wagmiDisconnect is stable; registeredRef is a ref
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
 
   // Wrap connect to register wallet after successful connection
   const connect: typeof wagmiConnect = useCallback(
@@ -33,30 +62,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         onSuccess: async (data, ...rest) => {
           const raw = data.accounts[0];
           const addr: string | undefined = typeof raw === 'string' ? raw : raw?.address;
-          if (addr && !registeredRef.current.has(addr)) {
-            try {
-              await registerWallet(addr);
-              registeredRef.current.add(addr);
-            } catch (err: unknown) {
-              const e = err as { message?: string };
-              const msg = typeof e?.message === 'string' ? e.message : String(err);
-              if (msg.includes('already registered')) {
-                registeredRef.current.add(addr);
-              } else {
-                console.error('Failed to register wallet:', msg);
-              }
-            }
+          if (addr) {
+            const ok = await tryRegister(addr, registeredRef);
+            if (!ok) wagmiDisconnect();
           }
           options?.onSuccess?.(data, ...rest);
         },
       });
     },
-    [wagmiConnect],
+    [wagmiConnect, wagmiDisconnect],
   );
 
   const connectMetaMask = useCallback(() => {
     const metamask = connectors.find((c) => c.id === 'metaMask' || c.name === 'MetaMask');
-    if (metamask) connect({ connector: metamask });
+    if (metamask) {
+      connect({ connector: metamask });
+    } else {
+      console.warn('MetaMask connector not found. Is MetaMask installed?');
+    }
   }, [connectors, connect]);
 
   return (
