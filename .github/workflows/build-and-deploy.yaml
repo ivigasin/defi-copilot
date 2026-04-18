@@ -10,7 +10,7 @@ on:
       - "infra/terraform/**"
 
 env:
-  REGISTRY: registry.digitalocean.com/defi-copilot
+  REGISTRY: registry.digitalocean.com/defi-copilot-registry
 
 jobs:
   build-and-push:
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+        uses: digitalocean/action-doctl@v3
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
@@ -34,8 +34,13 @@ jobs:
 
       - name: Build image
         run: |
+          BUILD_ARGS=""
+          if [ "${{ matrix.app }}" = "web" ]; then
+            BUILD_ARGS="--build-arg NEXT_PUBLIC_API_URL=https://api.defi.vigasin.com"
+          fi
           docker build \
             -f apps/${{ matrix.app }}/Dockerfile \
+            $BUILD_ARGS \
             -t ${{ env.REGISTRY }}/${{ matrix.app }}:${{ github.sha }} \
             -t ${{ env.REGISTRY }}/${{ matrix.app }}:latest \
             .
@@ -54,6 +59,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
+          ref: main
 
       - name: Update image tags in manifests
         run: |
