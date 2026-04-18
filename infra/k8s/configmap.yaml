@@ -10,3 +10,4 @@ data:
   REDIS_HOST: "private-defi-copilot-redis-staging-do-user-120187-0.l.db.ondigitalocean.com"
   REDIS_PORT: "25061"
   REDIS_TLS: "true"
+  PROVIDER_TYPE: "evm"
