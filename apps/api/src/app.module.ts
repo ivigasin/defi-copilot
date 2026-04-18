@@ -1,3 +1,4 @@
+// CI flow validation — no functional change
 import { Module, Global } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { WalletsModule } from './wallets/wallets.module';
