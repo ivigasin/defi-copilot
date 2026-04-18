@@ -7,6 +7,11 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
+  @Get()
+  listWallets() {
+    return this.walletsService.listWallets();
+  }
+
   @Post()
   @UsePipes(new ZodValidationPipe(CreateWalletSchema))
   registerWallet(@Body() dto: CreateWalletDto) {

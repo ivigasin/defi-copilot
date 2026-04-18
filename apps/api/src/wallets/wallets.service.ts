@@ -10,6 +10,10 @@ export class WalletsService {
     @Inject('PORTFOLIO_PROVIDER') private readonly provider: PortfolioProvider,
   ) {}
 
+  async listWallets() {
+    return this.repository.findAllWallets();
+  }
+
   async registerWallet(dto: CreateWalletDto) {
     const existing = await this.repository.findWallet(dto.address);
     if (existing) {

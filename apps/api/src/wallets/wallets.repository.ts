@@ -7,6 +7,10 @@ import { AssetBalance, ProtocolPosition } from '@defi-copilot/domain';
 export class WalletsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAllWallets() {
+    return this.prisma.wallet.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+
   async createWallet(dto: CreateWalletDto) {
     return this.prisma.wallet.create({
       data: { address: dto.address, label: dto.label },
