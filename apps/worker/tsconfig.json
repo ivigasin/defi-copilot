@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "composite": false,
+    "paths": {
+      "@defi-copilot/domain": ["../../packages/domain/src"],
+      "@defi-copilot/shared": ["../../packages/shared/src"],
+      "@defi-copilot/provider-sdk": ["../../packages/provider-sdk/src"],
+      "@defi-copilot/recommendation-engine": ["../../packages/recommendation-engine/src"],
+      "@defi-copilot/alert-engine": ["../../packages/alert-engine/src"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

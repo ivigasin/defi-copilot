@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: api-jwt-auth
+  namespace: defi-copilot
+spec:
+  targetRefs:
+    - kind: Gateway
+      group: gateway.networking.k8s.io
+      name: api-waypoint
+  jwtRules:
+    - issuer: "https://auth.defi-copilot.example.com"
+      jwksUri: "https://auth.defi-copilot.example.com/.well-known/jwks.json"
+      forwardOriginalToken: true

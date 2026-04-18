@@ -1,0 +1,31 @@
+{
+  "name": "defi-portfolio-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "nx run @defi-copilot/web:dev",
+    "dev:api": "nx run @defi-copilot/api:dev",
+    "dev:worker": "nx run @defi-copilot/worker:dev",
+    "build": "nx run-many -t build",
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test",
+    "db:generate": "pnpm --filter @defi-copilot/api prisma generate",
+    "db:migrate": "pnpm --filter @defi-copilot/api prisma migrate dev",
+    "db:push": "pnpm --filter @defi-copilot/api prisma db push",
+    "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "graph": "nx graph",
+    "affected:build": "nx affected -t build",
+    "affected:test": "nx affected -t test",
+    "affected:lint": "nx affected -t lint"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "devDependencies": {
+    "@nx/js": "^22.6.5",
+    "nx": "^22.6.5",
+    "typescript": "^5"
+  }
+}

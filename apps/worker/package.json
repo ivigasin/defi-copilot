@@ -1,0 +1,30 @@
+{
+  "name": "@defi-copilot/worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node --transpile-only src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@defi-copilot/domain": "workspace:*",
+    "@defi-copilot/shared": "workspace:*",
+    "@defi-copilot/provider-sdk": "workspace:*",
+    "@defi-copilot/recommendation-engine": "workspace:*",
+    "@defi-copilot/alert-engine": "workspace:*",
+    "@prisma/client": "^6.0.0",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5"
+  }
+}

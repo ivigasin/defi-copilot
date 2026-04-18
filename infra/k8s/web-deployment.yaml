@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: defi-copilot-web
+  namespace: defi-copilot
+  labels:
+    app: defi-copilot-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: defi-copilot-web
+  template:
+    metadata:
+      labels:
+        app: defi-copilot-web
+    spec:
+      serviceAccountName: defi-copilot-web
+      containers:
+        - name: web
+          image: registry.digitalocean.com/defi-copilot/web:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: defi-copilot-config
+            - secretRef:
+                name: defi-copilot-secrets
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

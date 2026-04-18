@@ -1,0 +1,24 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: api-allow-sources
+  namespace: defi-copilot
+spec:
+  targetRefs:
+    - kind: Gateway
+      group: gateway.networking.k8s.io
+      name: api-waypoint
+  action: ALLOW
+  rules:
+    # Allow traffic from web pods
+    - from:
+        - source:
+            principals: ["cluster.local/ns/defi-copilot/sa/defi-copilot-web"]
+    # Allow traffic from worker pods
+    - from:
+        - source:
+            principals: ["cluster.local/ns/defi-copilot/sa/defi-copilot-worker"]
+    # Allow traffic from ingress controller
+    - from:
+        - source:
+            namespaces: ["ingress-nginx"]

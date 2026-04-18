@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+out
+build
+.nx
+.git
+*.tsbuildinfo
+.env*
+infra/k8s
+docs
+memory
+*.md
+!pnpm-workspace.yaml

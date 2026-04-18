@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  address   String   @id
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  snapshots       PortfolioSnapshot[]
+  balances        AssetBalance[]
+  positions       ProtocolPosition[]
+  recommendations Recommendation[]
+  alertRules      AlertRule[]
+  alertEvents     AlertEvent[]
+
+  @@map("wallets")
+}
+
+model PortfolioSnapshot {
+  id            String   @id @default(uuid())
+  walletAddress String   @map("wallet_address")
+  totalUsdValue Float    @map("total_usd_value")
+  timestamp     DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletAddress], references: [address])
+
+  @@index([walletAddress, timestamp])
+  @@map("portfolio_snapshots")
+}
+
+model AssetBalance {
+  id            String  @id @default(uuid())
+  walletAddress String  @map("wallet_address")
+  chainId       Int     @map("chain_id")
+  tokenSymbol   String  @map("token_symbol")
+  tokenAddress  String? @map("token_address")
+  amount        Float
+  usdValue      Float   @map("usd_value")
+
+  wallet Wallet @relation(fields: [walletAddress], references: [address])
+
+  @@index([walletAddress])
+  @@map("asset_balances")
+}
+
+model ProtocolPosition {
+  id           String       @id @default(uuid())
+  walletAddress String      @map("wallet_address")
+  chainId      Int          @map("chain_id")
+  protocol     String
+  positionType PositionType @map("position_type")
+  assetSymbols String[]     @map("asset_symbols")
+  usdValue     Float        @map("usd_value")
+  debtUsd      Float?       @map("debt_usd")
+  apy          Float?
+  rewardsUsd   Float?       @map("rewards_usd")
+  healthFactor Float?       @map("health_factor")
+  riskScore    Float?       @map("risk_score")
+  metadata     Json?
+  updatedAt    DateTime     @default(now()) @map("updated_at")
+
+  wallet Wallet @relation(fields: [walletAddress], references: [address])
+
+  @@index([walletAddress])
+  @@map("protocol_positions")
+}
+
+model Recommendation {
+  id               String             @id @default(uuid())
+  walletAddress    String             @map("wallet_address")
+  type             RecommendationType
+  title            String
+  summary          String
+  rationale        String[]
+  confidence       Float
+  expectedImpactUsd Float?            @map("expected_impact_usd")
+  createdAt        DateTime           @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletAddress], references: [address])
+
+  @@index([walletAddress])
+  @@map("recommendations")
+}
+
+model AlertRule {
+  id            String    @id @default(uuid())
+  walletAddress String    @map("wallet_address")
+  type          AlertType
+  threshold     Float
+  enabled       Boolean   @default(true)
+
+  wallet Wallet @relation(fields: [walletAddress], references: [address])
+  events AlertEvent[]
+
+  @@index([walletAddress])
+  @@map("alert_rules")
+}
+
+model AlertEvent {
+  id            String        @id @default(uuid())
+  walletAddress String        @map("wallet_address")
+  ruleId        String        @map("rule_id")
+  message       String
+  severity      AlertSeverity
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletAddress], references: [address])
+  rule   AlertRule @relation(fields: [ruleId], references: [id])
+
+  @@index([walletAddress, createdAt])
+  @@map("alert_events")
+}
+
+enum PositionType {
+  LENDING
+  BORROWING
+  LIQUIDITY_POOL
+  STAKING
+  FARMING
+  VAULT
+}
+
+enum RecommendationType {
+  IDLE_STABLECOIN
+  HIGH_CONCENTRATION
+  LOW_HEALTH_FACTOR
+  UNCLAIMED_REWARDS
+  LOW_YIELD
+}
+
+enum AlertType {
+  HEALTH_FACTOR
+  PORTFOLIO_DROP
+  YIELD_DROP
+  LARGE_BALANCE_CHANGE
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}

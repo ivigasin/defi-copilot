@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/domain" },
+    { "path": "packages/shared" },
+    { "path": "packages/provider-sdk" },
+    { "path": "packages/recommendation-engine" },
+    { "path": "packages/alert-engine" },
+    { "path": "apps/api" },
+    { "path": "apps/worker" }
+  ]
+}

@@ -1,0 +1,72 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "infra/argocd/**"
+      - "infra/terraform/**"
+
+env:
+  REGISTRY: registry.digitalocean.com/defi-copilot
+
+jobs:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        app: [api, web, worker]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DOCR
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build image
+        run: |
+          docker build \
+            -f apps/${{ matrix.app }}/Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ matrix.app }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ matrix.app }}:latest \
+            .
+
+      - name: Push image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ matrix.app }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ matrix.app }}:latest
+
+  update-manifests:
+    name: Update K8s Image Tags
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Update image tags in manifests
+        run: |
+          cd infra/k8s
+          sed -i "s|image: ${{ env.REGISTRY }}/api:.*|image: ${{ env.REGISTRY }}/api:${{ github.sha }}|g" api-deployment.yaml
+          sed -i "s|image: ${{ env.REGISTRY }}/web:.*|image: ${{ env.REGISTRY }}/web:${{ github.sha }}|g" web-deployment.yaml
+          sed -i "s|image: ${{ env.REGISTRY }}/worker:.*|image: ${{ env.REGISTRY }}/worker:${{ github.sha }}|g" worker-deployment.yaml
+
+      - name: Commit and push updated manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infra/k8s/
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update image tags to ${{ github.sha }}"
+          git push

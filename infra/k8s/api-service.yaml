@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: defi-copilot-api
+  namespace: defi-copilot
+  labels:
+    app: defi-copilot-api
+  annotations:
+    istio.io/use-waypoint: api-waypoint
+spec:
+  type: ClusterIP
+  selector:
+    app: defi-copilot-api
+  ports:
+    - port: 4000
+      targetPort: 4000
+      protocol: TCP

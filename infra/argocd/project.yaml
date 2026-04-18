@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: defi-copilot
+  namespace: argocd
+spec:
+  description: DeFi Portfolio Copilot project
+
+  # Only allow deployments to these namespaces
+  destinations:
+    - namespace: defi-copilot
+      server: https://kubernetes.default.svc
+    - namespace: defi-copilot-staging
+      server: https://kubernetes.default.svc
+
+  # Only allow manifests from this repo
+  sourceRepos:
+    - "https://github.com/ivigasin/defi-copilot.git"
+
+  # Allowed cluster-scoped and namespaced resources
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: security.istio.io
+      kind: PeerAuthentication
+    - group: security.istio.io
+      kind: RequestAuthentication
+    - group: security.istio.io
+      kind: AuthorizationPolicy
+    - group: gateway.networking.k8s.io
+      kind: Gateway

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: defi-copilot-config
+  namespace: defi-copilot
+data:
+  NODE_ENV: "production"
+  API_PORT: "4000"
+  WEB_PORT: "3000"
+  REDIS_HOST: "private-defi-copilot-redis-staging-do-user-120187-0.l.db.ondigitalocean.com"
+  REDIS_PORT: "25061"
+  REDIS_TLS: "true"

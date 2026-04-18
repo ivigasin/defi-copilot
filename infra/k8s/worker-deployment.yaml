@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: defi-copilot-worker
+  namespace: defi-copilot
+  labels:
+    app: defi-copilot-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: defi-copilot-worker
+  template:
+    metadata:
+      labels:
+        app: defi-copilot-worker
+    spec:
+      serviceAccountName: defi-copilot-worker
+      containers:
+        - name: worker
+          image: registry.digitalocean.com/defi-copilot/worker:latest
+          envFrom:
+            - configMapRef:
+                name: defi-copilot-config
+            - secretRef:
+                name: defi-copilot-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
