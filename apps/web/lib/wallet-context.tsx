@@ -30,8 +30,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     (variables, options) => {
       wagmiConnect(variables, {
         ...options,
-        onSuccess: async (data, vars, ctx) => {
-          const addr = data.accounts[0];
+        onSuccess: async (data, ...rest) => {
+          const raw = data.accounts[0];
+          const addr: string | undefined = typeof raw === 'string' ? raw : raw?.address;
           if (addr && !registeredRef.current.has(addr)) {
             try {
               await registerWallet(addr);
@@ -46,7 +47,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               }
             }
           }
-          options?.onSuccess?.(data, vars, ctx);
+          options?.onSuccess?.(data, ...rest);
         },
       });
     },
