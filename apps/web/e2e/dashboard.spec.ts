@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockApiRoutes, connectWallet, mockData } from './helpers';
+import { mockApiRoutes, connectWallet } from './helpers';
 
 test.describe('Dashboard Page', () => {
   test('shows connect prompt when no wallet', async ({ page }) => {
