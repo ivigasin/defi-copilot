@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { registerWallet } from './api';
 
@@ -26,11 +26,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const address = wagmiAddress ?? null;
 
   // Clear registration error when address changes
-  const prevAddress = useRef(address);
-  if (prevAddress.current !== address) {
-    prevAddress.current = address;
-    if (registrationError) setRegistrationError(null);
-  }
+  useEffect(() => {
+    if (registrationError) {
+      setRegistrationError(null);
+    }
+  }, [address]);
 
   // Register wallet with backend when connected
   useEffect(() => {
