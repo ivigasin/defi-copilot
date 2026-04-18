@@ -43,26 +43,28 @@ export class WalletsRepository {
   }
 
   async replacePositions(walletAddress: string, positions: ProtocolPosition[]) {
-    await this.prisma.protocolPosition.deleteMany({ where: { walletAddress } });
-    await this.prisma.protocolPosition.createMany({
-      data: positions.map((p) => ({
-        id: p.id,
-        walletAddress: p.walletAddress,
-        chainId: p.chainId,
-        protocol: p.protocol,
-        positionType: p.positionType,
-        assetSymbols: p.assetSymbols,
-        usdValue: p.usdValue,
-        debtUsd: p.debtUsd,
-        apy: p.apy,
-        rewardsUsd: p.rewardsUsd,
-        healthFactor: p.healthFactor,
-        riskScore: p.riskScore,
-        metadata: p.metadata ? JSON.parse(JSON.stringify(p.metadata)) : undefined,
-        updatedAt: p.updatedAt,
-      })),
+    return this.prisma.$transaction(async (tx) => {
+      await tx.protocolPosition.deleteMany({ where: { walletAddress } });
+      await tx.protocolPosition.createMany({
+        data: positions.map((p) => ({
+          id: p.id,
+          walletAddress: p.walletAddress,
+          chainId: p.chainId,
+          protocol: p.protocol,
+          positionType: p.positionType,
+          assetSymbols: p.assetSymbols,
+          usdValue: p.usdValue,
+          debtUsd: p.debtUsd,
+          apy: p.apy,
+          rewardsUsd: p.rewardsUsd,
+          healthFactor: p.healthFactor,
+          riskScore: p.riskScore,
+          metadata: p.metadata ? JSON.parse(JSON.stringify(p.metadata)) : undefined,
+          updatedAt: p.updatedAt,
+        })),
+      });
+      return tx.protocolPosition.findMany({ where: { walletAddress } });
     });
-    return this.prisma.protocolPosition.findMany({ where: { walletAddress } });
   }
 
   async findRecommendations(walletAddress: string) {
