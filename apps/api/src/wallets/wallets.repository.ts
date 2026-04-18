@@ -47,7 +47,6 @@ export class WalletsRepository {
       await tx.protocolPosition.deleteMany({ where: { walletAddress } });
       await tx.protocolPosition.createMany({
         data: positions.map((p) => ({
-          id: p.id,
           walletAddress: p.walletAddress,
           chainId: p.chainId,
           protocol: p.protocol,
