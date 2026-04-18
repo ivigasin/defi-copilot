@@ -17,6 +17,13 @@ spec:
     server: https://kubernetes.default.svc
     namespace: defi-copilot-staging
 
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: defi-copilot-secrets
+      jsonPointers:
+        - /data
+
   syncPolicy:
     automated:
       prune: true

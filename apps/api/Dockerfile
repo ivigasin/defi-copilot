@@ -92,29 +92,44 @@ FROM node:20-alpine AS production
 RUN apk add --no-cache tini
 WORKDIR /app
 
-# Full pnpm node_modules (includes .pnpm virtual store with Prisma client)
-COPY --from=build /app/node_modules ./node_modules
+# Keep original pnpm directory structure so symlinks resolve correctly
+# apps/api/node_modules/* → symlinks to ../../node_modules/.pnpm/...
+COPY --from=build /app/node_modules/.pnpm ./node_modules/.pnpm
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 
-# Compiled API
-COPY --from=build /app/apps/api/dist ./dist
+# Compiled API output (rootDir=monorepo root, so output mirrors src structure)
+COPY --from=build /app/apps/api/dist ./apps/api/dist
 
 # Prisma schema
-COPY --from=build /app/apps/api/prisma ./prisma
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 
-# Compiled workspace packages (pnpm symlinks in node_modules point here)
+# Compiled workspace packages + node_modules (symlinks → /app/node_modules/.pnpm)
+COPY --from=build /app/packages/domain/node_modules ./packages/domain/node_modules
 COPY --from=build /app/packages/domain/dist ./packages/domain/dist
 COPY --from=build /app/packages/domain/package.json ./packages/domain/package.json
+COPY --from=build /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build /app/packages/shared/package.json ./packages/shared/package.json
+COPY --from=build /app/packages/provider-sdk/node_modules ./packages/provider-sdk/node_modules
 COPY --from=build /app/packages/provider-sdk/dist ./packages/provider-sdk/dist
 COPY --from=build /app/packages/provider-sdk/package.json ./packages/provider-sdk/package.json
+COPY --from=build /app/packages/recommendation-engine/node_modules ./packages/recommendation-engine/node_modules
 COPY --from=build /app/packages/recommendation-engine/dist ./packages/recommendation-engine/dist
 COPY --from=build /app/packages/recommendation-engine/package.json ./packages/recommendation-engine/package.json
+COPY --from=build /app/packages/alert-engine/node_modules ./packages/alert-engine/node_modules
 COPY --from=build /app/packages/alert-engine/dist ./packages/alert-engine/dist
 COPY --from=build /app/packages/alert-engine/package.json ./packages/alert-engine/package.json
+
+# Create workspace package symlinks so compiled code can require('@defi-copilot/*')
+RUN mkdir -p node_modules/@defi-copilot && \
+    ln -s /app/packages/domain node_modules/@defi-copilot/domain && \
+    ln -s /app/packages/shared node_modules/@defi-copilot/shared && \
+    ln -s /app/packages/provider-sdk node_modules/@defi-copilot/provider-sdk && \
+    ln -s /app/packages/recommendation-engine node_modules/@defi-copilot/recommendation-engine && \
+    ln -s /app/packages/alert-engine node_modules/@defi-copilot/alert-engine
 
 ENV NODE_ENV=production
 EXPOSE 4000
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/api/dist/apps/api/src/main.js"]
