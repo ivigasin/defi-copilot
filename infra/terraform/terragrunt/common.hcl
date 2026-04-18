@@ -3,5 +3,5 @@
 locals {
   project = "defi-copilot"
   region  = "ams3"
-  domain  = "defi-copilot.dev"
+  domain  = "vigasin.com"
 }

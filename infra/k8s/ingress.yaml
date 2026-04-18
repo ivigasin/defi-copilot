@@ -10,11 +10,11 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - app.defi-copilot.dev
-        - api.defi-copilot.dev
+        - app.defi.vigasin.com
+        - api.defi.vigasin.com
       secretName: defi-copilot-tls
   rules:
-    - host: app.defi-copilot.dev
+    - host: app.defi.vigasin.com
       http:
         paths:
           - path: /
@@ -24,7 +24,7 @@ spec:
                 name: defi-copilot-web
                 port:
                   number: 3000
-    - host: api.defi-copilot.dev
+    - host: api.defi.vigasin.com
       http:
         paths:
           - path: /

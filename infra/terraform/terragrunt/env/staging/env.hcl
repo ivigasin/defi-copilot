@@ -19,7 +19,7 @@ locals {
   redis_cluster_name = "defi-copilot-redis-staging"
   redis_size         = "db-s-1vcpu-1gb"
 
-  # DNS
-  app_subdomain = "app-staging"
-  api_subdomain = "api-staging"
+  # DNS — subdomains relative to vigasin.com → app.defi.vigasin.com, api.defi.vigasin.com
+  app_subdomain = "app.defi"
+  api_subdomain = "api.defi"
 }
