@@ -1,6 +1,7 @@
 import { http, createConfig } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors';
+import type { EIP1193Provider } from 'viem';
 
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '';
 
@@ -14,7 +15,8 @@ export const wagmiConfig = createConfig({
         name: 'OKX Wallet',
         provider: (win) => {
           const w = win as Record<string, unknown> | undefined;
-          return (w?.okxwallet ?? w?.okexchain) as never;
+          const provider = w?.okxwallet ?? w?.okexchain;
+          return provider as EIP1193Provider | undefined;
         },
       },
     }),

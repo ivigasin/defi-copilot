@@ -21,16 +21,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { address: wagmiAddress, isConnecting } = useAccount();
   const { connectors, connect, error: connectError } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
-  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const [registrationError, setRegistrationError] = useState<{ address: string; message: string } | null>(null);
 
   const address = wagmiAddress ?? null;
-
-  // Clear registration error when address changes
-  useEffect(() => {
-    if (registrationError) {
-      setRegistrationError(null);
-    }
-  }, [address]);
 
   // Register wallet with backend when connected
   useEffect(() => {
@@ -40,12 +33,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const e = err as { message?: string };
         const msg = typeof e?.message === 'string' ? e.message : String(err);
         if (!msg.includes('already registered')) {
-          setRegistrationError(`Failed to register wallet: ${msg}`);
+          setRegistrationError({ address, message: `Failed to register wallet: ${msg}` });
         }
       });
   }, [address]);
 
-  const error = connectError?.message ?? registrationError ?? null;
+  const currentRegistrationError = registrationError?.address === address ? registrationError.message : null;
+  const error = connectError?.message ?? currentRegistrationError ?? null;
 
   const connectMetaMask = () => {
     const metamask = connectors.find((c) => c.id === 'metaMask' || c.name === 'MetaMask');

@@ -10,7 +10,9 @@ test.describe('Wallet Connection Flow', () => {
     await expect(connectBtn).toBeVisible();
 
     await connectBtn.click();
+    await expect(page.getByRole('dialog', { name: 'Connect Wallet' })).toBeVisible();
     await expect(page.getByText('Select a wallet to connect')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeFocused();
     await expect(page.getByRole('button', { name: /MetaMask/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /OKX Wallet/i })).toBeVisible();
     if (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
