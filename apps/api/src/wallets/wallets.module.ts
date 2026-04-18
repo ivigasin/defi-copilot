@@ -11,7 +11,7 @@ import { createProvider } from '@defi-copilot/provider-sdk';
     WalletsRepository,
     {
       provide: 'PORTFOLIO_PROVIDER',
-      useFactory: () => createProvider('mock'),
+      useFactory: () => createProvider('evm'),
     },
   ],
 })
