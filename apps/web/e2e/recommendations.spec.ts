@@ -9,8 +9,7 @@ test.describe('Recommendations Page', () => {
 
   test('displays recommendations after connection', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/recommendations');
-    await connectWallet(page);
+    await connectWallet(page, '/recommendations');
 
     await expect(page.getByText('Unclaimed Aave Rewards')).toBeVisible();
     await expect(page.getByText('You have $65.00 in unclaimed rewards on Aave')).toBeVisible();
@@ -19,16 +18,14 @@ test.describe('Recommendations Page', () => {
 
   test('shows rationale items', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/recommendations');
-    await connectWallet(page);
+    await connectWallet(page, '/recommendations');
 
     await expect(page.getByText('You have unclaimed rewards exceeding $50')).toBeVisible();
   });
 
   test('shows expected impact', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/recommendations');
-    await connectWallet(page);
+    await connectWallet(page, '/recommendations');
 
     await expect(page.getByText('Potential impact: $65.00')).toBeVisible();
   });

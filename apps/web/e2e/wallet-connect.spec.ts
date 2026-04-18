@@ -4,14 +4,15 @@ import { mockApiRoutes, mockData, connectWallet } from './helpers';
 const WALLET = mockData.walletAddress;
 
 test.describe('Wallet Connection Flow', () => {
-  test('shows Connect MetaMask button', async ({ page }) => {
+  test('shows wallet connect buttons', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page.getByRole('button', { name: /Connect MetaMask/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /MetaMask/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /OKX Wallet/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Ledger Live/i })).toBeVisible();
   });
 
   test('connects via mock MetaMask and shows connected state', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/dashboard');
     await connectWallet(page);
 
     await expect(page.getByText('Connected')).toBeVisible();
@@ -20,7 +21,6 @@ test.describe('Wallet Connection Flow', () => {
 
   test('disconnect resets wallet state', async ({ page }) => {
     await mockApiRoutes(page);
-    await page.goto('/dashboard');
     await connectWallet(page);
 
     await expect(page.getByText('Connected')).toBeVisible();

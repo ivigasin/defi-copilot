@@ -136,19 +136,32 @@ export async function mockApiRoutes(page: Page) {
   });
 }
 
-export async function connectWallet(page: Page) {
-  // Inject mock window.ethereum into the live page so connectMetaMask() resolves to the test address
-  await page.evaluate((address) => {
+/** Must be called BEFORE page.goto so wagmi's injected connector discovers the mock provider */
+export async function injectMockEthereum(page: Page) {
+  await page.addInitScript((address) => {
+    const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
     (window as unknown as Record<string, unknown>).ethereum = {
       isMetaMask: true,
       request: async ({ method }: { method: string }) => {
-        if (method === 'eth_requestAccounts') return [address];
+        if (method === 'eth_requestAccounts' || method === 'eth_accounts') return [address];
+        if (method === 'eth_chainId') return '0x1';
+        if (method === 'wallet_switchEthereumChain') return null;
         return null;
+      },
+      on: (event: string, cb: (...args: unknown[]) => void) => {
+        (listeners[event] ??= []).push(cb);
+      },
+      removeListener: (event: string, cb: (...args: unknown[]) => void) => {
+        listeners[event] = (listeners[event] ?? []).filter((fn) => fn !== cb);
       },
     };
   }, WALLET_ADDRESS);
+}
 
-  await page.getByRole('button', { name: /Connect MetaMask/i }).click();
-  // Wait for connected state — address truncated with ellipsis character
+/** Injects mock ethereum, navigates to the given path, clicks MetaMask, and waits for connection */
+export async function connectWallet(page: Page, path = '/dashboard') {
+  await injectMockEthereum(page);
+  await page.goto(path);
+  await page.getByRole('button', { name: /MetaMask/i }).click();
   await page.getByText(WALLET_ADDRESS.slice(0, 6)).waitFor();
 }
