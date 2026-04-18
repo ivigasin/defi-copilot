@@ -53,7 +53,7 @@ const WALLET_META: Record<string, { label: string; icon: () => React.ReactNode }
 const CONNECTOR_ORDER = ['metaMask', 'okxWallet', 'walletConnect', 'coinbaseWalletSDK'];
 
 function WalletModal({ onClose }: { onClose: () => void }) {
-  const { connectors, connect, isLoading, error } = useWallet();
+  const { address, connectors, connect, isLoading, error } = useWallet();
 
   const sorted = [...connectors].sort((a, b) => {
     const ai = CONNECTOR_ORDER.indexOf(a.id);
@@ -63,8 +63,11 @@ function WalletModal({ onClose }: { onClose: () => void }) {
 
   const handleConnect = (connector: Connector) => {
     connect({ connector });
-    onClose();
   };
+
+  useEffect(() => {
+    if (address) onClose();
+  }, [address, onClose]);
 
   // Close on Escape
   const handleKeyDown = useCallback(
