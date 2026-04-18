@@ -33,8 +33,9 @@ const mockPrisma = {
   },
   $connect: jest.fn(),
   $disconnect: jest.fn(),
-  $transaction: jest.fn((fn: (tx: unknown) => Promise<unknown>) => fn(mockPrisma)),
+  $transaction: jest.fn(),
 };
+mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
 
 describe('Wallets API (integration)', () => {
   let app: INestApplication;
