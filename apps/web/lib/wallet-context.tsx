@@ -41,15 +41,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { connectors, connect: wagmiConnect, error: connectError } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
   const registeredRef = useRef<Set<string>>(new Set());
+  const activeAddressRef = useRef<string | null>(null);
   const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   const address = wagmiAddress ?? null;
+
+  // Keep activeAddressRef in sync for stale-result guards in async callbacks
+  useEffect(() => {
+    activeAddressRef.current = address;
+  }, [address]);
 
   // Handle auto-reconnect: register wallet when wagmi restores a session
   useEffect(() => {
     if (!address) return;
     if (registeredRef.current.has(address)) return;
-    tryRegister(address, registeredRef).then((errorMsg) => {
+    const targetAddress = address;
+    tryRegister(targetAddress, registeredRef).then((errorMsg) => {
+      // Guard against stale result if address changed during async registration
+      if (activeAddressRef.current !== targetAddress) return;
       if (errorMsg) {
         setRegistrationError(errorMsg);
         wagmiDisconnect();
@@ -68,6 +77,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           if (addr) {
             setRegistrationError(null);
             const errorMsg = await tryRegister(addr, registeredRef);
+            // Guard against stale result if address changed during async registration
+            if (activeAddressRef.current !== addr) return;
             if (errorMsg) {
               setRegistrationError(errorMsg);
               wagmiDisconnect();
