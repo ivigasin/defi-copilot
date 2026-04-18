@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { registerWallet } from './api';
 
@@ -21,20 +21,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { address: wagmiAddress, isConnecting } = useAccount();
   const { connectors, connect, error: connectError } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   const address = wagmiAddress ?? null;
 
   // Register wallet with backend when connected
   useEffect(() => {
-    if (!address) return;
-    registerWallet(address).catch((err: unknown) => {
-      const e = err as { message?: string };
-      const msg = typeof e?.message === 'string' ? e.message : String(err);
-      if (!msg.includes('already registered')) {
-        console.error('Failed to register wallet:', msg);
-      }
-    });
+    if (!address) {
+      setRegistrationError(null);
+      return;
+    }
+    registerWallet(address)
+      .then(() => setRegistrationError(null))
+      .catch((err: unknown) => {
+        const e = err as { message?: string };
+        const msg = typeof e?.message === 'string' ? e.message : String(err);
+        if (!msg.includes('already registered')) {
+          setRegistrationError(`Failed to register wallet: ${msg}`);
+        }
+      });
   }, [address]);
+
+  const error = connectError?.message ?? registrationError ?? null;
 
   const connectMetaMask = () => {
     const metamask = connectors.find((c) => c.id === 'metaMask' || c.name === 'MetaMask');
@@ -46,7 +54,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       value={{
         address,
         isLoading: isConnecting,
-        error: connectError?.message ?? null,
+        error,
         connectors,
         connect,
         disconnect: wagmiDisconnect,
