@@ -50,9 +50,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     tryRegister(address, registeredRef).then((ok) => {
       if (!ok) wagmiDisconnect();
     });
-  // wagmiDisconnect is stable; registeredRef is a ref
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address]);
+  }, [address, wagmiDisconnect]);
 
   // Wrap connect to register wallet after successful connection
   const connect: typeof wagmiConnect = useCallback(
