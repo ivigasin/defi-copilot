@@ -1,7 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { useAccount } from 'wagmi';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { registerWallet } from './api';
 
 interface WalletState {
@@ -15,22 +14,9 @@ interface WalletState {
 const WalletContext = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [manualAddress, setManualAddress] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { address: wagmiAddress, isConnected } = useAccount();
-
-  // Auto-register wagmi-connected wallet
-  useEffect(() => {
-    if (!isConnected || !wagmiAddress) return;
-
-    registerWallet(wagmiAddress).catch((err) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('already registered')) {
-        console.error('[wallet] Failed to register wagmi wallet:', msg);
-      }
-    });
-  }, [wagmiAddress, isConnected]);
 
   const connect = useCallback(async (addr: string) => {
     setIsLoading(true);
@@ -45,17 +31,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
-    setManualAddress(addr);
+    setAddress(addr);
     setIsLoading(false);
   }, []);
 
   const disconnect = useCallback(() => {
-    setManualAddress(null);
+    setAddress(null);
     setError(null);
   }, []);
-
-  // Prefer manual address, then wagmi address
-  const address = manualAddress ?? (isConnected ? wagmiAddress ?? null : null);
 
   return (
     <WalletContext value={{ address, isLoading, error, connect, disconnect }}>
