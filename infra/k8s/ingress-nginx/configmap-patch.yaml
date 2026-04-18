@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+data:
+  # Disabled because the DO Regional Network LB (REGIONAL_NETWORK type)
+  # does not forward PROXY protocol headers despite the annotation.
+  # Without this set to false nginx returns EOF for all plain-TCP requests.
+  use-proxy-protocol: "false"
