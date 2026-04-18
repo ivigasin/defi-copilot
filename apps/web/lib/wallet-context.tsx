@@ -17,7 +17,7 @@ interface WalletState {
 
 const WalletContext = createContext<WalletState | null>(null);
 
-async function tryRegister(addr: string, registeredRef: React.RefObject<Set<string>>) {
+async function tryRegister(addr: string, registeredRef: { current: Set<string> }) {
   if (registeredRef.current.has(addr)) return true;
   try {
     await registerWallet(addr);
