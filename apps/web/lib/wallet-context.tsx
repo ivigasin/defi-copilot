@@ -1,64 +1,70 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { useAccount } from 'wagmi';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { registerWallet } from './api';
 
 interface WalletState {
   address: string | null;
   isLoading: boolean;
   error: string | null;
-  connect: (address: string) => Promise<void>;
+  connectMetaMask: () => Promise<void>;
   disconnect: () => void;
 }
 
 const WalletContext = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [manualAddress, setManualAddress] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { address: wagmiAddress, isConnected } = useAccount();
 
-  // Auto-register wagmi-connected wallet
-  useEffect(() => {
-    if (!isConnected || !wagmiAddress) return;
-
-    registerWallet(wagmiAddress).catch((err) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('already registered')) {
-        console.error('[wallet] Failed to register wagmi wallet:', msg);
-      }
-    });
-  }, [wagmiAddress, isConnected]);
-
-  const connect = useCallback(async (addr: string) => {
+  const connectMetaMask = useCallback(async () => {
+    type EIP1193Provider = {
+      request: (args: { method: string }) => Promise<string[]>;
+      isMetaMask?: boolean;
+      providers?: EIP1193Provider[];
+    };
+    const win = window as unknown as { ethereum?: EIP1193Provider };
+    const root = win.ethereum;
+    if (!root) {
+      setError('MetaMask not detected. Install the MetaMask extension and refresh.');
+      return;
+    }
+    // When multiple wallets are installed, each injects into window.ethereum.providers[]
+    const ethereum: EIP1193Provider =
+      root.providers?.find((p) => p.isMetaMask && !('isOKExWallet' in p) && !('isOkxWallet' in p)) ??
+      (root.isMetaMask ? root : null) ??
+      root;
+    if (!ethereum.isMetaMask) {
+      setError('MetaMask not detected. Install the MetaMask extension and refresh.');
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
-      await registerWallet(addr);
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      const addr = accounts[0];
+      if (!addr) throw new Error('No account returned from MetaMask');
+      await registerWallet(addr).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!msg.includes('already registered')) throw err;
+      });
+      setAddress(addr);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('already registered')) {
-        setError(msg);
-        setIsLoading(false);
-        return;
-      }
+      setError(msg);
+    } finally {
+      setIsLoading(false);
     }
-    setManualAddress(addr);
-    setIsLoading(false);
   }, []);
 
   const disconnect = useCallback(() => {
-    setManualAddress(null);
+    setAddress(null);
     setError(null);
   }, []);
 
-  // Prefer manual address, then wagmi address
-  const address = manualAddress ?? (isConnected ? wagmiAddress ?? null : null);
-
   return (
-    <WalletContext value={{ address, isLoading, error, connect, disconnect }}>
+    <WalletContext value={{ address, isLoading, error, connectMetaMask, disconnect }}>
       {children}
     </WalletContext>
   );
