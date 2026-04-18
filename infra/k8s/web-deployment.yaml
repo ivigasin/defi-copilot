@@ -18,7 +18,7 @@ spec:
       serviceAccountName: defi-copilot-web
       containers:
         - name: web
-          image: registry.digitalocean.com/defi-copilot-registry/web:b223d73e423d97d214aff7cc8dc8da0965338a96
+          image: registry.digitalocean.com/defi-copilot-registry/web:f7573ded55042df4668053787d483b5e52bbbc62
           ports:
             - containerPort: 3000
           envFrom:
