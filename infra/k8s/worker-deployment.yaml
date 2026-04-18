@@ -18,7 +18,7 @@ spec:
       serviceAccountName: defi-copilot-worker
       containers:
         - name: worker
-          image: registry.digitalocean.com/defi-copilot-registry/worker:f56bcadfba4cf8974855012e797c5dafa45a001a
+          image: registry.digitalocean.com/defi-copilot-registry/worker:dab335dcfbf32246507d4973ca37bb4025c63ee6
           envFrom:
             - configMapRef:
                 name: defi-copilot-config
