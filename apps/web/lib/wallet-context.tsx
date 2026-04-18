@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useRef, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useRef, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { registerWallet } from './api';
 
@@ -17,21 +17,22 @@ interface WalletState {
 
 const WalletContext = createContext<WalletState | null>(null);
 
-async function tryRegister(addr: string, registeredRef: { current: Set<string> }) {
-  if (registeredRef.current.has(addr)) return true;
+/** Attempts to register a wallet address. Returns null on success, or an error message on failure. */
+async function tryRegister(addr: string, registeredRef: { current: Set<string> }): Promise<string | null> {
+  if (registeredRef.current.has(addr)) return null;
   try {
     await registerWallet(addr);
     registeredRef.current.add(addr);
-    return true;
+    return null;
   } catch (err: unknown) {
     const e = err as { message?: string };
     const msg = typeof e?.message === 'string' ? e.message : String(err);
     if (msg.includes('already registered')) {
       registeredRef.current.add(addr);
-      return true;
+      return null;
     }
     console.error('Failed to register wallet:', msg);
-    return false;
+    return msg;
   }
 }
 
@@ -40,6 +41,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { connectors, connect: wagmiConnect, error: connectError } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
   const registeredRef = useRef<Set<string>>(new Set());
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   const address = wagmiAddress ?? null;
 
@@ -47,8 +49,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!address) return;
     if (registeredRef.current.has(address)) return;
-    tryRegister(address, registeredRef).then((ok) => {
-      if (!ok) wagmiDisconnect();
+    tryRegister(address, registeredRef).then((errorMsg) => {
+      if (errorMsg) {
+        setRegistrationError(errorMsg);
+        wagmiDisconnect();
+      }
     });
   }, [address, wagmiDisconnect]);
 
@@ -61,8 +66,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           const raw = data.accounts[0];
           const addr: string | undefined = typeof raw === 'string' ? raw : raw?.address;
           if (addr) {
-            const ok = await tryRegister(addr, registeredRef);
-            if (!ok) {
+            setRegistrationError(null);
+            const errorMsg = await tryRegister(addr, registeredRef);
+            if (errorMsg) {
+              setRegistrationError(errorMsg);
               wagmiDisconnect();
               return;
             }
@@ -88,7 +95,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       value={{
         address,
         isLoading: isConnecting,
-        error: connectError?.message ?? null,
+        error: connectError?.message ?? registrationError,
         connectors,
         connect,
         disconnect: wagmiDisconnect,
