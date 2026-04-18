@@ -5,7 +5,8 @@ import { WalletsService } from './wallets.service';
 
 const TEST_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
 
-const mockService: jest.Mocked<Pick<WalletsService, 'registerWallet' | 'getPortfolio' | 'getPositions' | 'getRecommendations' | 'getAlerts'>> = {
+const mockService: jest.Mocked<Pick<WalletsService, 'listWallets' | 'registerWallet' | 'getPortfolio' | 'getPositions' | 'getRecommendations' | 'getAlerts'>> = {
+  listWallets: jest.fn(),
   registerWallet: jest.fn(),
   getPortfolio: jest.fn(),
   getPositions: jest.fn(),
@@ -24,6 +25,17 @@ describe('WalletsController', () => {
     }).compile();
 
     controller = module.get(WalletsController);
+  });
+
+  describe('GET /wallets', () => {
+    it('delegates to service.listWallets', async () => {
+      const wallets = [{ address: TEST_ADDRESS, label: null, createdAt: new Date() }];
+      mockService.listWallets.mockResolvedValue(wallets);
+
+      const result = await controller.listWallets();
+      expect(result).toEqual(wallets);
+      expect(mockService.listWallets).toHaveBeenCalled();
+    });
   });
 
   describe('POST /wallets', () => {

@@ -8,6 +8,7 @@ const TEST_ADDRESS = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
 
 function makeRepo(): jest.Mocked<WalletsRepository> {
   return {
+    findAllWallets: jest.fn(),
     createWallet: jest.fn(),
     findWallet: jest.fn(),
     createSnapshot: jest.fn(),
@@ -27,6 +28,17 @@ describe('WalletsService', () => {
     repo = makeRepo();
     provider = new MockPortfolioProvider();
     service = new WalletsService(repo, provider);
+  });
+
+  describe('listWallets', () => {
+    it('returns all wallets from repository', async () => {
+      const wallets = [{ address: TEST_ADDRESS, label: null, createdAt: new Date() }];
+      repo.findAllWallets.mockResolvedValue(wallets);
+
+      const result = await service.listWallets();
+      expect(result).toEqual(wallets);
+      expect(repo.findAllWallets).toHaveBeenCalled();
+    });
   });
 
   describe('registerWallet', () => {

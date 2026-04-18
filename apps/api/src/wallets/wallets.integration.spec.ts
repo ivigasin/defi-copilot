@@ -10,6 +10,7 @@ const mockPrisma = {
   wallet: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn(),
   },
   portfolioSnapshot: {
     create: jest.fn(),
@@ -56,6 +57,31 @@ describe('Wallets API (integration)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  // ─── GET /wallets ──────────────────────────────────────────────
+
+  describe('GET /wallets', () => {
+    const validAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
+
+    it('returns list of registered wallets', async () => {
+      mockPrisma.wallet.findMany.mockResolvedValue([
+        { address: validAddress, label: null, createdAt: new Date() },
+      ]);
+
+      const res = await request(app.getHttpServer()).get('/wallets').expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body[0].address).toBe(validAddress);
+    });
+
+    it('returns empty array when no wallets registered', async () => {
+      mockPrisma.wallet.findMany.mockResolvedValue([]);
+
+      const res = await request(app.getHttpServer()).get('/wallets').expect(200);
+
+      expect(res.body).toEqual([]);
+    });
   });
 
   // ─── POST /wallets ─────────────────────────────────────────────
