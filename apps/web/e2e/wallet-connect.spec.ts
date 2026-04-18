@@ -23,15 +23,15 @@ test.describe('Wallet Connection Flow', () => {
     await mockApiRoutes(page);
     await connectWallet(page);
 
-    await expect(page.getByText('Connected')).toBeVisible();
     await expect(page.getByText(WALLET.slice(0, 6))).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Disconnect' })).toBeVisible();
   });
 
   test('disconnect resets wallet state', async ({ page }) => {
     await mockApiRoutes(page);
     await connectWallet(page);
 
-    await expect(page.getByText('Connected')).toBeVisible();
+    await expect(page.getByText(WALLET.slice(0, 6))).toBeVisible();
 
     await page.getByRole('button', { name: 'Disconnect' }).click();
 
