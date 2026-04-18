@@ -8,6 +8,7 @@ interface WalletState {
   isLoading: boolean;
   error: string | null;
   connect: (address: string) => Promise<void>;
+  connectMetaMask: () => Promise<void>;
   disconnect: () => void;
 }
 
@@ -35,13 +36,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  const connectMetaMask = useCallback(async () => {
+    const ethereum = (window as unknown as { ethereum?: { request: (args: { method: string }) => Promise<string[]> } }).ethereum;
+    if (!ethereum) {
+      setError('MetaMask not detected. Please install the MetaMask extension.');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      const addr = accounts[0];
+      if (!addr) throw new Error('No account returned from MetaMask');
+      await connect(addr);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
+      setIsLoading(false);
+    }
+  }, [connect]);
+
   const disconnect = useCallback(() => {
     setAddress(null);
     setError(null);
   }, []);
 
   return (
-    <WalletContext value={{ address, isLoading, error, connect, disconnect }}>
+    <WalletContext value={{ address, isLoading, error, connect, connectMetaMask, disconnect }}>
       {children}
     </WalletContext>
   );
