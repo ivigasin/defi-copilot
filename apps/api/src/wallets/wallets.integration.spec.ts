@@ -33,6 +33,7 @@ const mockPrisma = {
   },
   $connect: jest.fn(),
   $disconnect: jest.fn(),
+  $transaction: jest.fn((fn: (tx: unknown) => Promise<unknown>) => fn(mockPrisma)),
 };
 
 describe('Wallets API (integration)', () => {
