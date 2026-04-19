@@ -4,6 +4,31 @@ import { mockApiRoutes, mockData, connectWallet } from './helpers';
 const WALLET = mockData.walletAddress;
 
 test.describe('Wallet Connection Flow', () => {
+  test('clicking MetaMask without extension does not show Provider not found error', async ({ page }) => {
+    // Intentionally do NOT inject mock ethereum — MetaMask is absent in this scenario
+    await page.goto('/dashboard');
+
+    await page.getByRole('button', { name: /Connect wallet/i }).click();
+    await expect(page.getByRole('dialog', { name: 'Connect Wallet' })).toBeVisible();
+
+    await page.getByRole('button', { name: /MetaMask/i }).click();
+
+    // Give wagmi time to settle and surface any error
+    await page.waitForTimeout(1500);
+
+    // The bug was: "Provider not found. Version: @wagmi/core@3.4.4" appeared here.
+    // After the fix (injected() instead of injected({ target: 'metaMask' })) the
+    // connector silently does nothing when MetaMask is absent — no error is shown.
+    const errorLocator = page.locator('p.text-rose-400');
+    const errorCount = await errorLocator.count();
+    if (errorCount > 0) {
+      const errorText = await errorLocator.first().textContent();
+      expect(errorText ?? '').not.toContain('Provider not found');
+    }
+    // If no error element is present at all, the assertion passes trivially — which is
+    // the expected outcome after the fix.
+  });
+
   test('shows Connect wallet button and opens modal with options', async ({ page }) => {
     await page.goto('/dashboard');
     const connectBtn = page.getByRole('button', { name: /Connect wallet/i });

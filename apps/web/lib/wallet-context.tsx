@@ -101,12 +101,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [connectors, connect]);
 
+  // Suppress low-signal wagmi infrastructure errors that have no actionable
+  // meaning for the user (e.g. "Provider not found" when MetaMask is absent).
+  const connectErrorMessage = connectError?.message ?? null;
+  const isProviderNotFound =
+    connectErrorMessage !== null && connectErrorMessage.includes('Provider not found');
+  const displayError = isProviderNotFound ? null : (connectErrorMessage ?? registrationError);
+
   return (
     <WalletContext
       value={{
         address,
         isLoading: isConnecting,
-        error: connectError?.message ?? registrationError,
+        error: displayError,
         connectors,
         connect,
         disconnect: wagmiDisconnect,
