@@ -13,20 +13,16 @@ test.describe('Wallet Connection Flow', () => {
 
     await page.getByRole('button', { name: /MetaMask/i }).click();
 
-    // Give wagmi time to settle and surface any error
-    await page.waitForTimeout(1500);
-
-    // The bug was: "Provider not found. Version: @wagmi/core@3.4.4" appeared here.
-    // After the fix (injected() instead of injected({ target: 'metaMask' })) the
-    // connector silently does nothing when MetaMask is absent — no error is shown.
+    // Wait for wagmi to settle: either an error appears or the modal stays stable.
+    // Use expect.poll to avoid a fixed sleep.
     const errorLocator = page.locator('p.text-rose-400');
-    const errorCount = await errorLocator.count();
-    if (errorCount > 0) {
-      const errorText = await errorLocator.first().textContent();
-      expect(errorText ?? '').not.toContain('Provider not found');
-    }
-    // If no error element is present at all, the assertion passes trivially — which is
-    // the expected outcome after the fix.
+    await expect
+      .poll(async () => {
+        const count = await errorLocator.count();
+        if (count === 0) return 'no-error';
+        return await errorLocator.first().textContent();
+      }, { timeout: 3000 })
+      .not.toContain('Provider not found');
   });
 
   test('shows Connect wallet button and opens modal with options', async ({ page }) => {

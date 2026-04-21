@@ -77,9 +77,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           if (addr) {
             setRegistrationError(null);
             const errorMsg = await tryRegister(addr, registeredRef);
-            // Guard against stale result if address changed during async registration
-            if (activeAddressRef.current !== addr) return;
-            if (errorMsg) {
+            // Guard against stale result: only apply state updates if address is still current
+            if (errorMsg && activeAddressRef.current === addr) {
               setRegistrationError(errorMsg);
               wagmiDisconnect();
               return;
@@ -106,7 +105,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connectErrorMessage = connectError?.message ?? null;
   const isProviderNotFound =
     connectErrorMessage !== null && connectErrorMessage.includes('Provider not found');
-  const displayError = isProviderNotFound ? null : (connectErrorMessage ?? registrationError);
+  const displayError = isProviderNotFound ? registrationError : (connectErrorMessage ?? registrationError);
 
   return (
     <WalletContext

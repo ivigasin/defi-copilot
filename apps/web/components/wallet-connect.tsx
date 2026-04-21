@@ -186,7 +186,11 @@ function WalletModal({ onClose }: { onClose: () => void }) {
 export function WalletConnect() {
   const { address, disconnect } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
-  const handleClose = useCallback(() => setIsOpen(false), []);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }, []);
 
   if (address) {
     return (
@@ -211,6 +215,7 @@ export function WalletConnect() {
   return (
     <>
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(true)}
         className="px-4 py-1.5 rounded-lg text-sm font-semibold
           bg-violet-600 text-white hover:bg-violet-500
